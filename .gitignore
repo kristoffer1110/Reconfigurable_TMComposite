@@ -1,0 +1,14 @@
+# Vivado generated/cache files - do not track
+literature/
+Rapport/
+sweeping window modularitet fra claude.txt
+test image reasoning.txt
+
+# Logs and journals
+*.log
+*.jou
+*.str
+*.pb
+*.dcp
+*.venv
+
