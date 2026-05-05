@@ -1,0 +1,21 @@
+patch_generator/
+patch_generator_v2/
+
+# Vivado generated/cache files - do not track
+*.cache/
+*.hw/
+*.ip_user_files/
+*.runs/
+*.sim/
+*.temp/
+
+# Logs and journals
+*.log
+*.jou
+*.str
+*.pb
+*.dcp
+
+# OS files
+.DS_Store
+Thumbs.db
