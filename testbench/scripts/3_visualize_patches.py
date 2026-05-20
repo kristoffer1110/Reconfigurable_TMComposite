@@ -63,7 +63,7 @@ def main() -> None:
     root = os.path.dirname(here)
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", default=os.path.join(root, "sim",
-                                                        "patches.npz"))
+                                                        "enc_patches7x7.npz"))
     parser.add_argument("--out-dir", default=os.path.join(root, "sim"))
     parser.add_argument("--cell", type=int, default=8,
                         help="canvas cell size for the grid views (default 8)")
@@ -77,34 +77,34 @@ def main() -> None:
     d = args.out_dir
     os.makedirs(d, exist_ok=True)
 
-    p0 = patches[0]
+    p0 = patches[20]
 
     # ── Inverse-decoded outputs ───────────────────────────────────────────────
     print("\n── inverse-decoded (bin_idx → 8-bit centre) ──")
     save(patch_to_image(p0, scale=20),
-         os.path.join(d, "patch_0.png"),
-         f"patch 0 @ x={p0.x_index} y={p0.y_index}, decoded")
+         os.path.join(d, "patch_20_7x7.png"),
+         f"patch 20 @ x={p0.x_index} y={p0.y_index}, decoded")
 
     save(patches_to_grid(patches, cell=args.cell, use_position=True, as_is=False),
-         os.path.join(d, "patch_grid.png"),
+         os.path.join(d, "patch_grid_7x7.png"),
          "all patches at decoded positions, decoded")
 
     save(reconstruct_image(patches, img_size=32, as_is=False),
-         os.path.join(d, "patch_recon.png"),
+         os.path.join(d, "patch_recon_7x7.png"),
          "32x32 reconstruction, decoded", scale=8)
 
     # ── As-is (raw thermometer value) outputs ────────────────────────────────
     print("\n── as-is (thermometer value × 255/127) ──")
     save(patch_to_image(p0, scale=20, as_is=True),
-         os.path.join(d, "patch_0_encoded.png"),
-         f"patch 0 @ x={p0.x_index} y={p0.y_index}, as-is")
+         os.path.join(d, "patch_20_encoded_7x7.png"),
+         f"patch 20 @ x={p0.x_index} y={p0.y_index}, as-is")
 
     save(patches_to_grid(patches, cell=args.cell, use_position=True, as_is=True),
-         os.path.join(d, "patch_grid_encoded.png"),
+         os.path.join(d, "patch_grid_encoded_7x7.png"),
          "all patches at decoded positions, as-is")
 
     save(reconstruct_image(patches, img_size=32, as_is=True),
-         os.path.join(d, "patch_recon_encoded.png"),
+         os.path.join(d, "patch_recon_encoded_7x7.png"),
          "32x32 reconstruction, as-is", scale=8)
 
 

@@ -22,9 +22,9 @@ def main() -> None:
     root = os.path.dirname(here)
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", default=os.path.join(root, "sim",
-                                                        "tb_output.txt"))
+                                                        "tb_enc_output7x7.txt"))
     parser.add_argument("--output", default=os.path.join(root, "sim",
-                                                         "patches.npz"))
+                                                         "enc_patches7x7.npz"))
     args = parser.parse_args()
 
     if not os.path.isfile(args.input):

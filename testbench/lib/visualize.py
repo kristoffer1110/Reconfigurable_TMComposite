@@ -99,36 +99,46 @@ def patch_to_image(patch: Patch, scale: int = 1,
 
 # ── Grid of patches placed at their (x_index, y_index) ───────────────────────
 def patches_to_grid(patches: Sequence[Patch],
-                    cell: int = 8,
+                    cell: int = PS,
                     use_position: bool = True,
-                    as_is: bool = False) -> Image.Image:
+                    as_is: bool = False,
+                    step: int = 7) -> Image.Image:
     """Tile patches into a single image.
 
-    If `use_position` is True (default), each patch is placed at the canvas
-    cell `(x_index, y_index)` decoded from its position registers. This makes
-    the canvas a faithful reproduction of the source image (when the RTL is
-    correct): the top-left patch ends up at the top-left of the canvas.
+    If `use_position` is True (default), only patches whose x_index and
+    y_index are both multiples of `step` are kept, then placed adjacent to
+    each other by normalising their positions to (x_index // step,
+    y_index // step). With step=PS this gives a gapless non-overlapping
+    reconstruction of the source image.
 
-    If False, patches are placed in transmission order on a square grid —
-    useful when position decoding itself is suspect.
+    If False, every nth patch in transmission order is packed in a square
+    grid — useful when position decoding itself is suspect.
 
-    ``as_is=True`` passes through to :func:`patch_to_image` — see that
-    function's docstring for the rendering difference.
+    ``as_is=True`` passes through to :func:`patch_to_image`.
+    ``cell`` defaults to PS so each patch fills its canvas cell exactly.
     """
     if not patches:
         raise ValueError("no patches to render")
 
     if use_position:
-        cols = max(p.x_index for p in patches) + 1
-        rows = max(p.y_index for p in patches) + 1
+        # Retain only patches that sit on the step-aligned grid so the
+        # reconstruction is gap-free and non-overlapping.
+        patches = [p for p in patches
+                   if p.x_index % step == 0 and p.y_index % step == 0]
+        if not patches:
+            raise ValueError("no patches survive the step filter — "
+                             "check that step divides into the patch positions")
+        cols = max(p.x_index // step for p in patches) + 1
+        rows = max(p.y_index // step for p in patches) + 1
     else:
+        patches = list(patches)[::step]
         side = int(np.ceil(np.sqrt(len(patches))))
         cols = rows = side
 
     canvas = Image.new("RGB", (cols * cell, rows * cell), color=(0, 0, 0))
     for idx, p in enumerate(patches):
         if use_position:
-            cx, cy = p.x_index, p.y_index
+            cx, cy = p.x_index // step, p.y_index // step
         else:
             cx, cy = idx % cols, idx // cols
         canvas.paste(patch_to_image(p, scale=max(1, cell // PS), as_is=as_is),
