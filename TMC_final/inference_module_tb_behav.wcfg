@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="inference_module_tb_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="functions_pkg" />
+            <top_module name="inference_module_tb" />
+            <top_module name="math_pkg" />
+            <top_module name="types_pkg" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="13.015000 us"></ZoomStartTime>
+      <ZoomEndTime time="26.375001 us"></ZoomEndTime>
+      <Cursor1Time time="6.535000 us"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="213"></NameColumnWidth>
+      <ValueColumnWidth column_width="150"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="36" />
+   <wvobject fp_name="/inference_module_tb/clk" type="logic">
+      <obj_property name="ElementShortName">clk</obj_property>
+      <obj_property name="ObjectShortName">clk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/DUT/clauses/state" type="other">
+      <obj_property name="ElementShortName">state</obj_property>
+      <obj_property name="ObjectShortName">state</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/DUT/patches/state" type="other">
+      <obj_property name="ElementShortName">state</obj_property>
+      <obj_property name="ObjectShortName">state</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/n_reset" type="logic">
+      <obj_property name="ElementShortName">n_reset</obj_property>
+      <obj_property name="ObjectShortName">n_reset</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/wr_ready_intr" type="logic">
+      <obj_property name="ElementShortName">wr_ready_intr</obj_property>
+      <obj_property name="ObjectShortName">wr_ready_intr</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/bram_addr" type="array">
+      <obj_property name="ElementShortName">bram_addr[31:0]</obj_property>
+      <obj_property name="ObjectShortName">bram_addr[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/bram_en" type="logic">
+      <obj_property name="ElementShortName">bram_en</obj_property>
+      <obj_property name="ObjectShortName">bram_en</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/bram_data" type="array">
+      <obj_property name="ElementShortName">bram_data[31:0]</obj_property>
+      <obj_property name="ObjectShortName">bram_data[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/gpio_in" type="array">
+      <obj_property name="ElementShortName">gpio_in[4:0]</obj_property>
+      <obj_property name="ObjectShortName">gpio_in[4:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/gpio_out" type="array">
+      <obj_property name="ElementShortName">gpio_out[0:0]</obj_property>
+      <obj_property name="ObjectShortName">gpio_out[0:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/s_axis_tdata" type="array">
+      <obj_property name="ElementShortName">s_axis_tdata[31:0]</obj_property>
+      <obj_property name="ObjectShortName">s_axis_tdata[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/s_axis_tvalid" type="logic">
+      <obj_property name="ElementShortName">s_axis_tvalid</obj_property>
+      <obj_property name="ObjectShortName">s_axis_tvalid</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/s_axis_tready" type="logic">
+      <obj_property name="ElementShortName">s_axis_tready</obj_property>
+      <obj_property name="ObjectShortName">s_axis_tready</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/s_axis_tlast" type="logic">
+      <obj_property name="ElementShortName">s_axis_tlast</obj_property>
+      <obj_property name="ObjectShortName">s_axis_tlast</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/m_axis_tdata" type="array">
+      <obj_property name="ElementShortName">m_axis_tdata[31:0]</obj_property>
+      <obj_property name="ObjectShortName">m_axis_tdata[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/m_axis_tvalid" type="logic">
+      <obj_property name="ElementShortName">m_axis_tvalid</obj_property>
+      <obj_property name="ObjectShortName">m_axis_tvalid</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/m_axis_tready" type="logic">
+      <obj_property name="ElementShortName">m_axis_tready</obj_property>
+      <obj_property name="ObjectShortName">m_axis_tready</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/m_axis_tlast" type="logic">
+      <obj_property name="ElementShortName">m_axis_tlast</obj_property>
+      <obj_property name="ObjectShortName">m_axis_tlast</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/bram_addr_r" type="array">
+      <obj_property name="ElementShortName">bram_addr_r[31:0]</obj_property>
+      <obj_property name="ObjectShortName">bram_addr_r[31:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/bram_en_r" type="logic">
+      <obj_property name="ElementShortName">bram_en_r</obj_property>
+      <obj_property name="ObjectShortName">bram_en_r</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/CLK_PERIOD" type="other">
+      <obj_property name="ElementShortName">CLK_PERIOD</obj_property>
+      <obj_property name="ObjectShortName">CLK_PERIOD</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/PS0" type="other">
+      <obj_property name="ElementShortName">PS0</obj_property>
+      <obj_property name="ObjectShortName">PS0</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/PS1" type="other">
+      <obj_property name="ElementShortName">PS1</obj_property>
+      <obj_property name="ObjectShortName">PS1</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/PS2" type="other">
+      <obj_property name="ElementShortName">PS2</obj_property>
+      <obj_property name="ObjectShortName">PS2</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/PS3" type="other">
+      <obj_property name="ElementShortName">PS3</obj_property>
+      <obj_property name="ObjectShortName">PS3</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/FEAT_BITS_C" type="other">
+      <obj_property name="ElementShortName">FEAT_BITS_C</obj_property>
+      <obj_property name="ObjectShortName">FEAT_BITS_C</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/LIT_BITS_C" type="other">
+      <obj_property name="ElementShortName">LIT_BITS_C</obj_property>
+      <obj_property name="ObjectShortName">LIT_BITS_C</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/WGHT_BITS_C" type="other">
+      <obj_property name="ElementShortName">WGHT_BITS_C</obj_property>
+      <obj_property name="ObjectShortName">WGHT_BITS_C</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/SUM_BITS_C" type="other">
+      <obj_property name="ElementShortName">SUM_BITS_C</obj_property>
+      <obj_property name="ObjectShortName">SUM_BITS_C</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/WGHT_WORDS_C" type="other">
+      <obj_property name="ElementShortName">WGHT_WORDS_C</obj_property>
+      <obj_property name="ObjectShortName">WGHT_WORDS_C</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/INC_WORDS_C" type="other">
+      <obj_property name="ElementShortName">INC_WORDS_C</obj_property>
+      <obj_property name="ObjectShortName">INC_WORDS_C</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/SPCLST_WORDS_C" type="other">
+      <obj_property name="ElementShortName">SPCLST_WORDS_C</obj_property>
+      <obj_property name="ObjectShortName">SPCLST_WORDS_C</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/BRAM_DEPTH_C" type="other">
+      <obj_property name="ElementShortName">BRAM_DEPTH_C</obj_property>
+      <obj_property name="ObjectShortName">BRAM_DEPTH_C</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/NUM_PIXELS_C" type="other">
+      <obj_property name="ElementShortName">NUM_PIXELS_C</obj_property>
+      <obj_property name="ObjectShortName">NUM_PIXELS_C</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/CS_WORD_WIDTH_C" type="other">
+      <obj_property name="ElementShortName">CS_WORD_WIDTH_C</obj_property>
+      <obj_property name="ObjectShortName">CS_WORD_WIDTH_C</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/BRAM_BASE_S3" type="other">
+      <obj_property name="ElementShortName">BRAM_BASE_S3</obj_property>
+      <obj_property name="ObjectShortName">BRAM_BASE_S3</obj_property>
+   </wvobject>
+</wave_config>

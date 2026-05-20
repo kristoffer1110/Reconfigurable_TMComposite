@@ -25,7 +25,7 @@
       "axi_gpio_0": "",
       "xlconcat_0": "",
       "smartconnect_0": "",
-      "patch_gen_stream_0": ""
+      "axis_patch_gen_0": ""
     },
     "interface_ports": {
       "DDR": {
@@ -2581,19 +2581,19 @@
           }
         }
       },
-      "patch_gen_stream_0": {
-        "vlnv": "xilinx.com:user:patch_gen_stream:1.0",
+      "axis_patch_gen_0": {
+        "vlnv": "xilinx.com:user:axis_patch_gen:1.0",
         "ip_revision": "1",
-        "xci_name": "design_1_patch_gen_stream_0_1",
-        "xci_path": "ip\\design_1_patch_gen_stream_0_1\\design_1_patch_gen_stream_0_1.xci",
-        "inst_hier_path": "patch_gen_stream_0"
+        "xci_name": "design_1_axis_patch_gen_0_0",
+        "xci_path": "ip\\design_1_axis_patch_gen_0_0\\design_1_axis_patch_gen_0_0.xci",
+        "inst_hier_path": "axis_patch_gen_0"
       }
     },
     "interface_nets": {
       "axi_dma_0_M_AXIS_MM2S": {
         "interface_ports": [
-          "patch_gen_stream_0/s_axis",
-          "axi_dma_0/M_AXIS_MM2S"
+          "axi_dma_0/M_AXIS_MM2S",
+          "axis_patch_gen_0/s_axis"
         ]
       },
       "axi_dma_0_M_AXI_MM2S": {
@@ -2608,10 +2608,10 @@
           "smartconnect_0/S01_AXI"
         ]
       },
-      "patch_gen_stream_0_m_axis": {
+      "axis_patch_gen_0_m_axis": {
         "interface_ports": [
-          "patch_gen_stream_0/m_axis",
-          "axi_dma_0/S_AXIS_S2MM"
+          "axi_dma_0/S_AXIS_S2MM",
+          "axis_patch_gen_0/m_axis"
         ]
       },
       "processing_system7_0_DDR": {
@@ -2661,19 +2661,19 @@
       "axi_gpio_0_gpio2_io_o": {
         "ports": [
           "axi_gpio_0/gpio2_io_o",
-          "patch_gen_stream_0/gpio_in"
+          "axis_patch_gen_0/gpio_in"
         ]
       },
-      "patch_gen_stream_0_dma_intr": {
+      "axis_patch_gen_0_gpio_out": {
         "ports": [
-          "patch_gen_stream_0/dma_intr",
-          "xlconcat_0/In0"
-        ]
-      },
-      "patch_gen_stream_0_gpio_out": {
-        "ports": [
-          "patch_gen_stream_0/gpio_out",
+          "axis_patch_gen_0/gpio_out",
           "axi_gpio_0/gpio_io_i"
+        ]
+      },
+      "axis_patch_gen_0_wr_ready_intr": {
+        "ports": [
+          "axis_patch_gen_0/wr_ready_intr",
+          "xlconcat_0/In0"
         ]
       },
       "processing_system7_0_FCLK_CLK0": {
@@ -2691,7 +2691,7 @@
           "ps7_0_axi_periph/M01_ACLK",
           "processing_system7_0/S_AXI_ACP_ACLK",
           "smartconnect_0/aclk",
-          "patch_gen_stream_0/clk"
+          "axis_patch_gen_0/clk"
         ]
       },
       "processing_system7_0_FCLK_RESET0_N": {
@@ -2715,7 +2715,7 @@
           "axi_gpio_0/s_axi_aresetn",
           "smartconnect_0/aresetn",
           "axi_dma_0/axi_resetn",
-          "patch_gen_stream_0/n_reset"
+          "axis_patch_gen_0/n_reset"
         ]
       },
       "xlconcat_0_dout": {

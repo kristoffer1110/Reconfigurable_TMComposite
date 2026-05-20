@@ -21,6 +21,7 @@
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
+use work.types_pkg.all;
 
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
@@ -32,25 +33,14 @@ use IEEE.STD_LOGIC_1164.ALL;
 --use UNISIM.VComponents.all;
 
 entity top is
-    Generic (
-        NUM_GPIO_IN     : positive := 5;
-        NUM_GPIO_OUT    : positive := 1;
-        NUM_PS          : positive := 4;
-        PS0             : positive := 3;
-        PS1             : positive := 4;
-        PS2             : positive := 5;
-        PS3             : positive := 7;
-        IMG_SIZE        : positive := 32;        
-        PX_BITS         : positive := 8
-    );
     
     Port    (
         clk             : in STD_LOGIC;
         n_reset         : in STD_LOGIC;
-        dma_intr        : out STD_LOGIC;
+        wr_ready_intr   : out STD_LOGIC;
         
-        gpio_in         : in STD_LOGIC_VECTOR (NUM_GPIO_IN -1 downto 0);
-        gpio_out        : out STD_LOGIC_VECTOR (NUM_GPIO_OUT -1 downto 0);
+        gpio_in         : in STD_LOGIC_VECTOR (4 downto 0);
+        gpio_out        : out STD_LOGIC_VECTOR (0 downto 0);
         
         s_axis_tdata    : in  STD_LOGIC_VECTOR(31 downto 0);
         s_axis_tvalid   : in  STD_LOGIC;
@@ -71,7 +61,7 @@ architecture rtl of top is
     
     signal reset            : STD_LOGIC;
     
-    signal ps_data          : STD_LOGIC_VECTOR(NUM_PS -1 downto 0);
+    signal ps_data          : STD_LOGIC_VECTOR(NUM_SPECIALISTS -1 downto 0);
     signal ps_valid         : STD_LOGIC;
     signal ps_request       : STD_LOGIC;
     
@@ -94,11 +84,6 @@ begin
     reset <= not n_reset;
     
     gpio_if : entity work.gpio_mapper
-        generic map (
-            NUM_IN              => NUM_GPIO_IN,
-            NUM_OUT             => NUM_GPIO_OUT,
-            NUM_PS              => NUM_PS
-        )
         
         port map (
             gpio_in             => gpio_in,
@@ -109,10 +94,6 @@ begin
         );
     
     s_axis_if : entity work.axis_pixel_in
-        generic map (
-            PX_BITS             => PX_BITS
-        )
-        
         port map (
             s_axis_tdata        => s_axis_tdata ,    
             s_axis_tvalid       => s_axis_tvalid,
@@ -126,22 +107,11 @@ begin
         );
     
     encoded_patches : entity work.enc_patches
-        generic map (
-            DATA_WIDTH          => IMG_SIZE,
-            NUM_PS              => NUM_PS    ,
-            PS0                 => PS0       ,
-            PS1                 => PS1       ,
-            PS2                 => PS2       ,
-            PS3                 => PS3       ,
-            PX_BITS             => PX_BITS   ,
-            ENC_BITS            => ENC_BITS  ,
-            POS_BITS            => POS_BITS
-        )
         
         port map (
             clk                 => clk,
             reset               => reset,
-            dma_intr            => dma_intr,
+            wr_ready_intr       => wr_ready_intr,
             ps_data_in          => ps_data,        
             ps_valid_in         => ps_valid,   
             ps_request_out      => ps_request,
@@ -161,10 +131,8 @@ begin
         );
         
     m_axis_if : entity work.axis_patch_out
-        generic map (
-            MAX_PS              => PS3,
-            ENC_BITS            => ENC_BITS,
-            POS_BITS            => POS_BITS
+        generic map(
+            PX_BITS => ENC_BITS
         )
         
         port map (
@@ -177,7 +145,6 @@ begin
             patch_c2_data_in    => patch_c2_data,
             patch_valid_in      => patch_valid,
             patch_ready_out     => patch_ready,
-            patch_last_in       => patch_last,            
             m_axis_tdata        => m_axis_tdata ,
             m_axis_tvalid       => m_axis_tvalid,
             m_axis_tready       => m_axis_tready,

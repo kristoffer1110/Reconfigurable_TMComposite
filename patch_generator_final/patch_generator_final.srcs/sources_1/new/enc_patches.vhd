@@ -21,36 +21,17 @@
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
-
--- Uncomment the following library declaration if using
--- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
-
--- Uncomment the following library declaration if instantiating
--- any Xilinx leaf cells in this code.
---library UNISIM;
---use UNISIM.VComponents.all;
+use work.types_pkg.all;
 
 entity enc_patches is
-    Generic (
-        NUM_PS          : positive := 4; -- PS0 should be smallest patch size
-        PS0             : positive := 3;
-        PS1             : positive := 4;
-        PS2             : positive := 5;
-        PS3             : positive := 7; -- PS3 should be largest patch size 
-        DATA_WIDTH      : positive := 32;
-        PX_BITS         : positive := 8;
-        POS_BITS        : positive := 29;
-        ENC_BITS        : positive := 7        
-    );
     
     Port (
         clk                 : in STD_LOGIC;
         reset               : in STD_LOGIC;
         
-        dma_intr            : out STD_LOGIC;
+        wr_ready_intr       : out STD_LOGIC;
         
-        ps_data_in          : in STD_LOGIC_VECTOR(NUM_PS -1 downto 0);
+        ps_data_in          : in STD_LOGIC_VECTOR(NUM_SPECIALISTS -1 downto 0);
         ps_valid_in         : in STD_LOGIC;
         ps_request_out      : out STD_LOGIC;
              
@@ -82,10 +63,6 @@ architecture rtl of enc_patches is
 begin
 
     pixel_encoding : entity work.pixel_encoding
-        generic map (
-            PX_BITS     => PX_BITS,
-            ENC_BITS    => ENC_BITS
-        )
     
         port map (
             clk             => clk            ,
@@ -103,21 +80,11 @@ begin
         );
     
     patches : entity work.patches_v5
-        generic map (
-            NUM_PS     => NUM_PS    ,
-            PS0        => PS0       ,
-            PS1        => PS1       ,
-            PS2        => PS2       ,
-            PS3        => PS3       ,
-            DATA_WIDTH => DATA_WIDTH,
-            PX_BITS    => ENC_BITS  ,        
-            POS_BITS   => POS_BITS
-        )
         
         port map (
             clk                 => clk ,            
             reset               => reset,   
-            dma_intr            => dma_intr,
+            wr_ready_intr       => wr_ready_intr,
             ps_data_in          => ps_data_in,
             ps_valid_in         => ps_valid_in   ,
             ps_request_out      => ps_request_out,

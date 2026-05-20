@@ -21,11 +21,9 @@
 
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
+use work.types_pkg.all;
 
 entity axis_pixel_in is
-    Generic (
-        PX_BITS : positive := 8
-    );
     Port (
     
         s_axis_tdata    : in  STD_LOGIC_VECTOR(31 downto 0);

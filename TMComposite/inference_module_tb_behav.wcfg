@@ -13,26 +13,36 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="705.750 ns"></ZoomStartTime>
-      <ZoomEndTime time="1,031.251 ns"></ZoomEndTime>
-      <Cursor1Time time="785.000 ns"></Cursor1Time>
+      <ZoomStartTime time="22,733.934 ns"></ZoomStartTime>
+      <ZoomEndTime time="22,800.335 ns"></ZoomEndTime>
+      <Cursor1Time time="22,745.000 ns"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
-      <NameColumnWidth column_width="210"></NameColumnWidth>
-      <ValueColumnWidth column_width="170"></ValueColumnWidth>
+      <NameColumnWidth column_width="213"></NameColumnWidth>
+      <ValueColumnWidth column_width="154"></ValueColumnWidth>
    </column_width_setting>
-   <WVObjectSize size="38" />
+   <WVObjectSize size="32" />
    <wvobject fp_name="/inference_module_tb/clk" type="logic">
       <obj_property name="ElementShortName">clk</obj_property>
       <obj_property name="ObjectShortName">clk</obj_property>
    </wvobject>
-   <wvobject fp_name="/inference_module_tb/reset" type="logic">
-      <obj_property name="ElementShortName">reset</obj_property>
-      <obj_property name="ObjectShortName">reset</obj_property>
+   <wvobject fp_name="/inference_module_tb/dut/n_reset" type="logic">
+      <obj_property name="ElementShortName">n_reset</obj_property>
+      <obj_property name="ObjectShortName">n_reset</obj_property>
    </wvobject>
-   <wvobject fp_name="/inference_module_tb/dma_intr" type="logic">
-      <obj_property name="ElementShortName">dma_intr</obj_property>
-      <obj_property name="ObjectShortName">dma_intr</obj_property>
+   <wvobject fp_name="/inference_module_tb/dut/clauses/state" type="other">
+      <obj_property name="ElementShortName">state</obj_property>
+      <obj_property name="ObjectShortName">state</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/dut/clauses/w_mtx[0]" type="array">
+      <obj_property name="ElementShortName">[0][9:0][3:0]</obj_property>
+      <obj_property name="ObjectShortName">[0][9:0][3:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/dut/clauses/clause_vals" type="array">
+      <obj_property name="ElementShortName">clause_vals[7:0]</obj_property>
+      <obj_property name="ObjectShortName">clause_vals[7:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
    </wvobject>
    <wvobject fp_name="/inference_module_tb/dut/patches/wr_en" type="logic">
       <obj_property name="ElementShortName">wr_en</obj_property>
@@ -41,6 +51,11 @@
    <wvobject fp_name="/inference_module_tb/dut/patches/wr_cntr" type="array">
       <obj_property name="ElementShortName">wr_cntr[4:0]</obj_property>
       <obj_property name="ObjectShortName">wr_cntr[4:0]</obj_property>
+      <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
+   </wvobject>
+   <wvobject fp_name="/inference_module_tb/dut/patches/px_exc_cntr" type="array">
+      <obj_property name="ElementShortName">px_exc_cntr[7:0]</obj_property>
+      <obj_property name="ObjectShortName">px_exc_cntr[7:0]</obj_property>
       <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
    </wvobject>
    <wvobject fp_name="/inference_module_tb/dut/patches/rd_en" type="logic">
@@ -52,42 +67,34 @@
       <obj_property name="ObjectShortName">rd_cntr[4:0]</obj_property>
       <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
    </wvobject>
-   <wvobject fp_name="/inference_module_tb/dut/patches/px_exc_cntr" type="array">
-      <obj_property name="ElementShortName">px_exc_cntr[7:0]</obj_property>
-      <obj_property name="ObjectShortName">px_exc_cntr[7:0]</obj_property>
+   <wvobject fp_name="/inference_module_tb/dut/patches/tot_rd_cntr" type="array">
+      <obj_property name="ElementShortName">tot_rd_cntr[9:0]</obj_property>
+      <obj_property name="ObjectShortName">tot_rd_cntr[9:0]</obj_property>
       <obj_property name="Radix">UNSIGNEDDECRADIX</obj_property>
    </wvobject>
-   <wvobject fp_name="/inference_module_tb/gpio_data_in" type="array">
-      <obj_property name="ElementShortName">gpio_data_in[3:0]</obj_property>
-      <obj_property name="ObjectShortName">gpio_data_in[3:0]</obj_property>
+   <wvobject fp_name="/inference_module_tb/dut/gpio_in" type="array">
+      <obj_property name="ElementShortName">gpio_in[4:0]</obj_property>
+      <obj_property name="ObjectShortName">gpio_in[4:0]</obj_property>
    </wvobject>
-   <wvobject fp_name="/inference_module_tb/gpio_valid_in" type="logic">
-      <obj_property name="ElementShortName">gpio_valid_in</obj_property>
-      <obj_property name="ObjectShortName">gpio_valid_in</obj_property>
+   <wvobject fp_name="/inference_module_tb/dut/gpio_out" type="array">
+      <obj_property name="ElementShortName">gpio_out[0:0]</obj_property>
+      <obj_property name="ObjectShortName">gpio_out[0:0]</obj_property>
    </wvobject>
-   <wvobject fp_name="/inference_module_tb/gpio_request_out" type="logic">
-      <obj_property name="ElementShortName">gpio_request_out</obj_property>
-      <obj_property name="ObjectShortName">gpio_request_out</obj_property>
+   <wvobject fp_name="/inference_module_tb/dut/s_axis_tdata" type="array">
+      <obj_property name="ElementShortName">s_axis_tdata[31:0]</obj_property>
+      <obj_property name="ObjectShortName">s_axis_tdata[31:0]</obj_property>
    </wvobject>
-   <wvobject fp_name="/inference_module_tb/px_c0_data_in" type="array">
-      <obj_property name="ElementShortName">px_c0_data_in[7:0]</obj_property>
-      <obj_property name="ObjectShortName">px_c0_data_in[7:0]</obj_property>
+   <wvobject fp_name="/inference_module_tb/dut/s_axis_tvalid" type="logic">
+      <obj_property name="ElementShortName">s_axis_tvalid</obj_property>
+      <obj_property name="ObjectShortName">s_axis_tvalid</obj_property>
    </wvobject>
-   <wvobject fp_name="/inference_module_tb/px_c1_data_in" type="array">
-      <obj_property name="ElementShortName">px_c1_data_in[7:0]</obj_property>
-      <obj_property name="ObjectShortName">px_c1_data_in[7:0]</obj_property>
+   <wvobject fp_name="/inference_module_tb/dut/s_axis_tready" type="logic">
+      <obj_property name="ElementShortName">s_axis_tready</obj_property>
+      <obj_property name="ObjectShortName">s_axis_tready</obj_property>
    </wvobject>
-   <wvobject fp_name="/inference_module_tb/px_c2_data_in" type="array">
-      <obj_property name="ElementShortName">px_c2_data_in[7:0]</obj_property>
-      <obj_property name="ObjectShortName">px_c2_data_in[7:0]</obj_property>
-   </wvobject>
-   <wvobject fp_name="/inference_module_tb/px_valid_in" type="logic">
-      <obj_property name="ElementShortName">px_valid_in</obj_property>
-      <obj_property name="ObjectShortName">px_valid_in</obj_property>
-   </wvobject>
-   <wvobject fp_name="/inference_module_tb/px_ready_out" type="logic">
-      <obj_property name="ElementShortName">px_ready_out</obj_property>
-      <obj_property name="ObjectShortName">px_ready_out</obj_property>
+   <wvobject fp_name="/inference_module_tb/dut/s_axis_tlast" type="logic">
+      <obj_property name="ElementShortName">s_axis_tlast</obj_property>
+      <obj_property name="ObjectShortName">s_axis_tlast</obj_property>
    </wvobject>
    <wvobject fp_name="/inference_module_tb/dut/patch_valid" type="logic">
       <obj_property name="ElementShortName">patch_valid</obj_property>
@@ -101,25 +108,17 @@
       <obj_property name="ElementShortName">patch_last</obj_property>
       <obj_property name="ObjectShortName">patch_last</obj_property>
    </wvobject>
-   <wvobject fp_name="/inference_module_tb/class_sums_data_out" type="array">
-      <obj_property name="ElementShortName">class_sums_data_out[69:0]</obj_property>
-      <obj_property name="ObjectShortName">class_sums_data_out[69:0]</obj_property>
+   <wvobject fp_name="/inference_module_tb/dut/cs_data_out" type="array">
+      <obj_property name="ElementShortName">cs_data_out[127:0]</obj_property>
+      <obj_property name="ObjectShortName">cs_data_out[127:0]</obj_property>
    </wvobject>
-   <wvobject fp_name="/inference_module_tb/class_sums_valid_out" type="logic">
-      <obj_property name="ElementShortName">class_sums_valid_out</obj_property>
-      <obj_property name="ObjectShortName">class_sums_valid_out</obj_property>
-   </wvobject>
-   <wvobject fp_name="/inference_module_tb/class_sums_ready_in" type="logic">
-      <obj_property name="ElementShortName">class_sums_ready_in</obj_property>
-      <obj_property name="ObjectShortName">class_sums_ready_in</obj_property>
+   <wvobject fp_name="/inference_module_tb/dut/cs_valid_intr" type="logic">
+      <obj_property name="ElementShortName">cs_valid_intr</obj_property>
+      <obj_property name="ObjectShortName">cs_valid_intr</obj_property>
    </wvobject>
    <wvobject fp_name="/inference_module_tb/CLK_PERIOD" type="other">
       <obj_property name="ElementShortName">CLK_PERIOD</obj_property>
       <obj_property name="ObjectShortName">CLK_PERIOD</obj_property>
-   </wvobject>
-   <wvobject fp_name="/inference_module_tb/C_NUM_PS" type="other">
-      <obj_property name="ElementShortName">C_NUM_PS</obj_property>
-      <obj_property name="ObjectShortName">C_NUM_PS</obj_property>
    </wvobject>
    <wvobject fp_name="/inference_module_tb/C_PS0" type="other">
       <obj_property name="ElementShortName">C_PS0</obj_property>
@@ -137,10 +136,6 @@
       <obj_property name="ElementShortName">C_PS3</obj_property>
       <obj_property name="ObjectShortName">C_PS3</obj_property>
    </wvobject>
-   <wvobject fp_name="/inference_module_tb/C_DATA_WIDTH" type="other">
-      <obj_property name="ElementShortName">C_DATA_WIDTH</obj_property>
-      <obj_property name="ObjectShortName">C_DATA_WIDTH</obj_property>
-   </wvobject>
    <wvobject fp_name="/inference_module_tb/C_PX_BITS" type="other">
       <obj_property name="ElementShortName">C_PX_BITS</obj_property>
       <obj_property name="ObjectShortName">C_PX_BITS</obj_property>
@@ -157,24 +152,8 @@
       <obj_property name="ElementShortName">C_NUM_SPEC</obj_property>
       <obj_property name="ObjectShortName">C_NUM_SPEC</obj_property>
    </wvobject>
-   <wvobject fp_name="/inference_module_tb/C_NUM_CLAUSES" type="other">
-      <obj_property name="ElementShortName">C_NUM_CLAUSES</obj_property>
-      <obj_property name="ObjectShortName">C_NUM_CLAUSES</obj_property>
-   </wvobject>
-   <wvobject fp_name="/inference_module_tb/C_NUM_CLASSES" type="other">
-      <obj_property name="ElementShortName">C_NUM_CLASSES</obj_property>
-      <obj_property name="ObjectShortName">C_NUM_CLASSES</obj_property>
-   </wvobject>
-   <wvobject fp_name="/inference_module_tb/C_MAX_WEIGHT" type="other">
-      <obj_property name="ElementShortName">C_MAX_WEIGHT</obj_property>
-      <obj_property name="ObjectShortName">C_MAX_WEIGHT</obj_property>
-   </wvobject>
    <wvobject fp_name="/inference_module_tb/C_SUM_BITS" type="other">
       <obj_property name="ElementShortName">C_SUM_BITS</obj_property>
       <obj_property name="ObjectShortName">C_SUM_BITS</obj_property>
-   </wvobject>
-   <wvobject fp_name="/inference_module_tb/C_SUMS_WIDTH" type="other">
-      <obj_property name="ElementShortName">C_SUMS_WIDTH</obj_property>
-      <obj_property name="ObjectShortName">C_SUMS_WIDTH</obj_property>
    </wvobject>
 </wave_config>

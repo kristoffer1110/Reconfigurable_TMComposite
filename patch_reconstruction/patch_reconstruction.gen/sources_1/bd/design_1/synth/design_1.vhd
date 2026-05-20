@@ -2,7 +2,7 @@
 --Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------
 --Tool Version: Vivado v.2024.1 (win64) Build 5076996 Wed May 22 18:37:14 MDT 2024
---Date        : Tue May  5 22:36:32 2026
+--Date        : Wed May 20 21:57:03 2026
 --Host        : Kristoffers-PC running 64-bit major release  (build 9200)
 --Command     : generate_target design_1.bd
 --Design      : design_1
@@ -1404,11 +1404,11 @@ architecture STRUCTURE of design_1 is
     M00_AXI_rready : out STD_LOGIC
   );
   end component design_1_smartconnect_0_0;
-  component design_1_patch_gen_stream_0_1 is
+  component design_1_axis_patch_gen_0_0 is
   port (
     clk : in STD_LOGIC;
     n_reset : in STD_LOGIC;
-    dma_intr : out STD_LOGIC;
+    wr_ready_intr : out STD_LOGIC;
     gpio_in : in STD_LOGIC_VECTOR ( 4 downto 0 );
     gpio_out : out STD_LOGIC_VECTOR ( 0 to 0 );
     s_axis_tdata : in STD_LOGIC_VECTOR ( 31 downto 0 );
@@ -1420,7 +1420,7 @@ architecture STRUCTURE of design_1 is
     m_axis_tready : in STD_LOGIC;
     m_axis_tlast : out STD_LOGIC
   );
-  end component design_1_patch_gen_stream_0_1;
+  end component design_1_axis_patch_gen_0_0;
   signal axi_dma_0_M_AXIS_MM2S_TDATA : STD_LOGIC_VECTOR ( 31 downto 0 );
   signal axi_dma_0_M_AXIS_MM2S_TLAST : STD_LOGIC;
   signal axi_dma_0_M_AXIS_MM2S_TREADY : STD_LOGIC;
@@ -1456,12 +1456,12 @@ architecture STRUCTURE of design_1 is
   signal axi_dma_0_M_AXI_S2MM_WVALID : STD_LOGIC;
   signal axi_dma_0_s2mm_introut : STD_LOGIC;
   signal axi_gpio_0_gpio2_io_o : STD_LOGIC_VECTOR ( 4 downto 0 );
-  signal patch_gen_stream_0_dma_intr : STD_LOGIC;
-  signal patch_gen_stream_0_gpio_out : STD_LOGIC_VECTOR ( 0 to 0 );
-  signal patch_gen_stream_0_m_axis_TDATA : STD_LOGIC_VECTOR ( 31 downto 0 );
-  signal patch_gen_stream_0_m_axis_TLAST : STD_LOGIC;
-  signal patch_gen_stream_0_m_axis_TREADY : STD_LOGIC;
-  signal patch_gen_stream_0_m_axis_TVALID : STD_LOGIC;
+  signal axis_patch_gen_0_gpio_out : STD_LOGIC_VECTOR ( 0 to 0 );
+  signal axis_patch_gen_0_m_axis_TDATA : STD_LOGIC_VECTOR ( 31 downto 0 );
+  signal axis_patch_gen_0_m_axis_TLAST : STD_LOGIC;
+  signal axis_patch_gen_0_m_axis_TREADY : STD_LOGIC;
+  signal axis_patch_gen_0_m_axis_TVALID : STD_LOGIC;
+  signal axis_patch_gen_0_wr_ready_intr : STD_LOGIC;
   signal processing_system7_0_DDR_ADDR : STD_LOGIC_VECTOR ( 14 downto 0 );
   signal processing_system7_0_DDR_BA : STD_LOGIC_VECTOR ( 2 downto 0 );
   signal processing_system7_0_DDR_CAS_N : STD_LOGIC;
@@ -1689,16 +1689,16 @@ axi_dma_0: component design_1_axi_dma_0_0
       s_axi_lite_wdata(31 downto 0) => ps7_0_axi_periph_M00_AXI_WDATA(31 downto 0),
       s_axi_lite_wready => ps7_0_axi_periph_M00_AXI_WREADY,
       s_axi_lite_wvalid => ps7_0_axi_periph_M00_AXI_WVALID(0),
-      s_axis_s2mm_tdata(31 downto 0) => patch_gen_stream_0_m_axis_TDATA(31 downto 0),
+      s_axis_s2mm_tdata(31 downto 0) => axis_patch_gen_0_m_axis_TDATA(31 downto 0),
       s_axis_s2mm_tkeep(3 downto 0) => B"1111",
-      s_axis_s2mm_tlast => patch_gen_stream_0_m_axis_TLAST,
-      s_axis_s2mm_tready => patch_gen_stream_0_m_axis_TREADY,
-      s_axis_s2mm_tvalid => patch_gen_stream_0_m_axis_TVALID
+      s_axis_s2mm_tlast => axis_patch_gen_0_m_axis_TLAST,
+      s_axis_s2mm_tready => axis_patch_gen_0_m_axis_TREADY,
+      s_axis_s2mm_tvalid => axis_patch_gen_0_m_axis_TVALID
     );
 axi_gpio_0: component design_1_axi_gpio_0_0
      port map (
       gpio2_io_o(4 downto 0) => axi_gpio_0_gpio2_io_o(4 downto 0),
-      gpio_io_i(0) => patch_gen_stream_0_gpio_out(0),
+      gpio_io_i(0) => axis_patch_gen_0_gpio_out(0),
       s_axi_aclk => processing_system7_0_FCLK_CLK0,
       s_axi_araddr(8 downto 0) => ps7_0_axi_periph_M01_AXI_ARADDR(8 downto 0),
       s_axi_aresetn => rst_ps7_0_100M_peripheral_aresetn(0),
@@ -1719,21 +1719,21 @@ axi_gpio_0: component design_1_axi_gpio_0_0
       s_axi_wstrb(3 downto 0) => ps7_0_axi_periph_M01_AXI_WSTRB(3 downto 0),
       s_axi_wvalid => ps7_0_axi_periph_M01_AXI_WVALID
     );
-patch_gen_stream_0: component design_1_patch_gen_stream_0_1
+axis_patch_gen_0: component design_1_axis_patch_gen_0_0
      port map (
       clk => processing_system7_0_FCLK_CLK0,
-      dma_intr => patch_gen_stream_0_dma_intr,
       gpio_in(4 downto 0) => axi_gpio_0_gpio2_io_o(4 downto 0),
-      gpio_out(0) => patch_gen_stream_0_gpio_out(0),
-      m_axis_tdata(31 downto 0) => patch_gen_stream_0_m_axis_TDATA(31 downto 0),
-      m_axis_tlast => patch_gen_stream_0_m_axis_TLAST,
-      m_axis_tready => patch_gen_stream_0_m_axis_TREADY,
-      m_axis_tvalid => patch_gen_stream_0_m_axis_TVALID,
+      gpio_out(0) => axis_patch_gen_0_gpio_out(0),
+      m_axis_tdata(31 downto 0) => axis_patch_gen_0_m_axis_TDATA(31 downto 0),
+      m_axis_tlast => axis_patch_gen_0_m_axis_TLAST,
+      m_axis_tready => axis_patch_gen_0_m_axis_TREADY,
+      m_axis_tvalid => axis_patch_gen_0_m_axis_TVALID,
       n_reset => rst_ps7_0_100M_peripheral_aresetn(0),
       s_axis_tdata(31 downto 0) => axi_dma_0_M_AXIS_MM2S_TDATA(31 downto 0),
       s_axis_tlast => axi_dma_0_M_AXIS_MM2S_TLAST,
       s_axis_tready => axi_dma_0_M_AXIS_MM2S_TREADY,
-      s_axis_tvalid => axi_dma_0_M_AXIS_MM2S_TVALID
+      s_axis_tvalid => axi_dma_0_M_AXIS_MM2S_TVALID,
+      wr_ready_intr => axis_patch_gen_0_wr_ready_intr
     );
 processing_system7_0: component design_1_processing_system7_0_0
      port map (
@@ -2013,7 +2013,7 @@ smartconnect_0: component design_1_smartconnect_0_0
     );
 xlconcat_0: component design_1_xlconcat_0_1
      port map (
-      In0(0) => patch_gen_stream_0_dma_intr,
+      In0(0) => axis_patch_gen_0_wr_ready_intr,
       In1(0) => axi_dma_0_s2mm_introut,
       dout(1 downto 0) => xlconcat_0_dout(1 downto 0)
     );

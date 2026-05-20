@@ -1,7 +1,7 @@
 {
    "ActiveEmotionalView":"Default View",
-   "Default View_ScaleFactor":"1.0",
-   "Default View_TopLeft":"-48,-120",
+   "Default View_ScaleFactor":"0.619747",
+   "Default View_TopLeft":"10,-32",
    "ExpandedHierarchyInLayout":"",
    "guistr":"# # String gsaved with Nlview 7.7.1 2023-07-26 3bc4126617 VDI=43 GEI=38 GUI=JA:21.0
 #  -string -flagsOSRD
@@ -14,15 +14,15 @@ preplace inst rst_ps7_0_100M -pg 1 -lvl 1 -x 200 -y 640 -defaultsOSRD
 preplace inst axi_gpio_0 -pg 1 -lvl 3 -x 930 -y 100 -defaultsOSRD
 preplace inst xlconcat_0 -pg 1 -lvl 4 -x 1280 -y 460 -defaultsOSRD
 preplace inst smartconnect_0 -pg 1 -lvl 4 -x 1280 -y 300 -defaultsOSRD
-preplace inst patch_gen_stream_0 -pg 1 -lvl 2 -x 550 -y 100 -defaultsOSRD
+preplace inst axis_patch_gen_0 -pg 1 -lvl 2 -x 550 -y 100 -defaultsOSRD
 preplace netloc axi_dma_0_s2mm_introut 1 3 1 1110 390n
 preplace netloc processing_system7_0_FCLK_CLK0 1 0 6 20 410 370 10 740 210 1140 210 1430 220 1830
 preplace netloc processing_system7_0_FCLK_RESET0_N 1 0 6 30 530 NJ 530 NJ 530 NJ 530 NJ 530 1830
 preplace netloc rst_ps7_0_100M_interconnect_aresetn 1 1 1 390 310n
 preplace netloc rst_ps7_0_100M_peripheral_aresetn 1 1 3 380 210 760 460 1120J
 preplace netloc xlconcat_0_dout 1 4 1 1420 360n
-preplace netloc patch_gen_stream_0_dma_intr 1 2 2 700J 450 N
-preplace netloc patch_gen_stream_0_gpio_out 1 2 2 750 10 1100
+preplace netloc axis_patch_gen_0_wr_ready_intr 1 2 2 700J 450 N
+preplace netloc axis_patch_gen_0_gpio_out 1 2 2 750 10 1100
 preplace netloc axi_gpio_0_gpio2_io_o 1 1 3 390 200 NJ 200 1110
 preplace netloc axi_dma_0_M_AXI_MM2S 1 3 1 N 270
 preplace netloc axi_dma_0_M_AXI_S2MM 1 3 1 N 290
@@ -32,7 +32,7 @@ preplace netloc processing_system7_0_M_AXI_GP0 1 1 5 400 540 NJ 540 NJ 540 NJ 54
 preplace netloc ps7_0_axi_periph_M00_AXI 1 2 1 720 280n
 preplace netloc ps7_0_axi_periph_M01_AXI 1 2 1 730 80n
 preplace netloc smartconnect_0_M00_AXI 1 4 1 N 300
-preplace netloc patch_gen_stream_0_m_axis 1 2 1 710 80n
+preplace netloc axis_patch_gen_0_m_axis 1 2 1 710 80n
 preplace netloc axi_dma_0_M_AXIS_MM2S 1 1 3 400 190 NJ 190 1100
 levelinfo -pg 1 0 200 550 930 1280 1630 1870
 pagesize -pg 1 -db -bbox -sgen 0 0 1990 740

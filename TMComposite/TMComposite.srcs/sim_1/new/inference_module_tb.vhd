@@ -1,19 +1,24 @@
 ----------------------------------------------------------------------------------
 -- Testbench: inference_module_tb
 --
--- Tests the full inference pipeline:
---   pixel_encoding -> patches_v5 -> clauses
+-- Sequence per inference pass:
+--   1.  Reset
+--   2.  BRAM model responds to bram_en_out / bram_addr_out with trained parameters
+--   3.  Wait for gpio_out(0) (spclst_request AND ps_request both high)
+--   4.  Send specialist one-hot via gpio_in
+--   5.  Stream a full IMG_SIZE x IMG_SIZE image respecting s_axis_tready
+--   6.  Wait for cs_valid_intr, print class sums
+--   7.  Repeat for a second specialist
+--   8.  Mid-stream reset recovery test
 --
--- Sequence:
---   1. Reset
---   2. Wait for gpio_request_out (both ps_request and spclst_request high)
---   3. Send specialist/patch-size selection via gpio
---   4. Stream a DATA_WIDTH x DATA_WIDTH ramp image pixel by pixel,
---      respecting px_ready_out backpressure
---   5. Wait for class_sums_valid_out
---   6. Acknowledge with class_sums_ready_in
---   7. Print all class sums to transcript
---   8. Repeat for a second specialist to verify reset and re-accumulation
+-- BRAM layout (matches clauses.vhd):
+--   [0 .. WGHT_WORDS-1]                  weight words (one per clause*class)
+--   [WGHT_WORDS .. SPCLST_WORDS-1]       n_inc words  (INC_WORDS per clause)
+--   Each specialist block is SPCLST_WORDS wide, base = specialist_index * SPCLST_WORDS
+--
+-- Test values:
+--   Specialist s has weight = s+1 for all clause/class entries
+--   n_inc = all-ones so all literals are included in every clause
 ----------------------------------------------------------------------------------
 
 library IEEE;
@@ -29,136 +34,164 @@ end inference_module_tb;
 architecture sim of inference_module_tb is
 
     ---------------------------------------------------------------------------
-    -- Constants matching types_pkg and inference_module defaults
+    -- Constants (mirror types_pkg)
     ---------------------------------------------------------------------------
-    constant CLK_PERIOD      : time     := 10 ns;
+    constant CLK_PERIOD  : time := 10 ns;
 
-    constant C_NUM_PS        : positive := 4;
-    constant C_PS0           : positive := 3;
-    constant C_PS1           : positive := 4;
-    constant C_PS2           : positive := 5;
-    constant C_PS3           : positive := 7;
-    constant C_DATA_WIDTH    : positive := 32;
-    constant C_PX_BITS       : positive := 8;
-    constant C_POS_BITS      : positive := 29;
-    constant C_ENC_BITS      : positive := 7;
-    constant C_NUM_SPEC      : positive := NUM_SPECIALISTS;  -- 4
-    constant C_NUM_CLAUSES   : positive := NUM_CLAUSES;       -- 10
-    constant C_NUM_CLASSES   : positive := NUM_CLASSES;       -- 10
-    constant C_MAX_WEIGHT    : positive := MAX_WEIGHT;         -- 4
-    constant C_SUM_BITS      : positive := clog2(C_MAX_WEIGHT * C_NUM_CLAUSES) + 1;
-    constant C_SUMS_WIDTH    : positive := C_NUM_CLASSES * C_SUM_BITS;
+    constant C_IMG_SIZE  : positive := IMG_SIZE;
+    constant C_PS0       : positive := PS0;
+    constant C_PS1       : positive := PS1;
+    constant C_PS2       : positive := PS2;
+    constant C_PS3       : positive := PS3;
+    constant C_PX_BITS   : positive := PX_BITS;
+    constant C_POS_BITS  : positive := POS_BITS;
+    constant C_ENC_BITS  : positive := ENC_BITS;
+    constant C_NUM_SPEC  : positive := NUM_SPECIALISTS;
+    constant C_NUM_CL    : positive := NUM_CLAUSES;
+    constant C_NUM_CLS   : positive := NUM_CLASSES;
+    constant C_MAX_W     : positive := MAX_WEIGHT;
+    constant C_BRAM_AW   : positive := BRAM_ADDR_WIDTH;
+    constant C_BRAM_DW   : positive := BRAM_DATA_WIDTH;
+    constant C_AXI_RW    : positive := AXI_REG_WIDTH;
+    constant C_AXI_NR    : positive := AXI_NUM_REGS;
 
-    ---------------------------------------------------------------------------
-    -- DUT ports
-    ---------------------------------------------------------------------------
-    signal clk                  : STD_LOGIC := '0';
-    signal reset                : STD_LOGIC := '1';
-
-    signal dma_intr             : STD_LOGIC;
-
-    signal gpio_data_in         : STD_LOGIC_VECTOR(C_NUM_PS - 1 downto 0) := (others => '0');
-    signal gpio_valid_in        : STD_LOGIC := '0';
-    signal gpio_request_out     : STD_LOGIC;
-
-    signal px_c0_data_in        : STD_LOGIC_VECTOR(C_PX_BITS - 1 downto 0) := (others => '0');
-    signal px_c1_data_in        : STD_LOGIC_VECTOR(C_PX_BITS - 1 downto 0) := (others => '0');
-    signal px_c2_data_in        : STD_LOGIC_VECTOR(C_PX_BITS - 1 downto 0) := (others => '0');
-    signal px_valid_in          : STD_LOGIC := '0';
-    signal px_ready_out         : STD_LOGIC;
-
-    signal class_sums_data_out  : STD_LOGIC_VECTOR(C_SUMS_WIDTH - 1 downto 0);
-    signal class_sums_valid_out : STD_LOGIC;
-    signal class_sums_ready_in  : STD_LOGIC := '0';
+    -- Derived, matching clauses.vhd
+    constant C_SUM_BITS  : positive := clog2(C_MAX_W * C_NUM_CL) + 1;
+    constant C_WGHT_BITS : positive := clog2(C_MAX_W) + 2;
+    constant C_FEAT_BITS : positive := 2*C_POS_BITS + 3*C_PS3*C_PS3*C_ENC_BITS;
+    constant C_LIT_BITS  : positive := 2 * C_FEAT_BITS;
+    constant C_INC_WORDS : positive := (C_LIT_BITS + 31) / 32;
+    constant C_WGHT_WORDS: positive := C_NUM_CL * C_NUM_CLS;
+    constant C_SPCLST_W  : positive := C_WGHT_WORDS + C_NUM_CL * C_INC_WORDS;
+    constant BRAM_DEPTH  : positive := 4 * C_SPCLST_W;
 
     ---------------------------------------------------------------------------
-    -- Helper: send one pixel, respecting px_ready_out backpressure
+    -- BRAM model type and initialisation
     ---------------------------------------------------------------------------
+    type bram_t is array (0 to BRAM_DEPTH - 1) of
+        STD_LOGIC_VECTOR(C_BRAM_DW - 1 downto 0);
+
+    -- Specialist s: weight = s+1, n_inc = all-ones
+    function init_bram return bram_t is
+        variable mem  : bram_t := (others => (others => '0'));
+        variable base : integer;
+    begin
+        for s in 0 to 3 loop
+            base := s * C_SPCLST_W;
+            -- Weight words: constant value (s+1) in lower WGHT_BITS
+            for w in 0 to C_WGHT_WORDS - 1 loop
+                mem(base + w) :=
+                    std_logic_vector(to_signed(s + 1, C_BRAM_DW));
+            end loop;
+            -- n_inc words: all-ones
+            for w in 0 to C_NUM_CL * C_INC_WORDS - 1 loop
+                mem(base + C_WGHT_WORDS + w) := (others => '1');
+            end loop;
+        end loop;
+        return mem;
+    end function;
+
+    ---------------------------------------------------------------------------
+    -- DUT signals
+    ---------------------------------------------------------------------------
+    signal clk           : STD_LOGIC := '0';
+    signal n_reset       : STD_LOGIC := '0';
+
+    signal wr_ready_intr : STD_LOGIC;
+    signal cs_valid_intr : STD_LOGIC;
+
+    signal bram_addr     : STD_LOGIC_VECTOR(C_BRAM_AW - 1 downto 0);
+    signal bram_en       : STD_LOGIC;
+    signal bram_data     : STD_LOGIC_VECTOR(C_BRAM_DW - 1 downto 0)
+                             := (others => '0');
+
+    -- gpio_in: bit 0 = spclst_valid, bits NUM_SPEC downto 1 = one-hot data
+    signal gpio_in       : STD_LOGIC_VECTOR(C_NUM_SPEC downto 0) := (others => '0');
+    signal gpio_out      : STD_LOGIC_VECTOR(0 downto 0);
+
+    signal s_axis_tdata  : STD_LOGIC_VECTOR(31 downto 0) := (others => '0');
+    signal s_axis_tvalid : STD_LOGIC := '0';
+    signal s_axis_tready : STD_LOGIC;
+    signal s_axis_tlast  : STD_LOGIC := '0';
+
+    signal cs_data_out   : STD_LOGIC_VECTOR(C_AXI_NR * C_AXI_RW - 1 downto 0);
+
+    ---------------------------------------------------------------------------
+    -- Helpers
+    ---------------------------------------------------------------------------
+
+    -- Send one pixel (3 channels in bits 23:0), respecting tready backpressure
     procedure send_pixel (
-        constant c0_val  : in natural;
-        constant c1_val  : in natural;
-        constant c2_val  : in natural;
-        signal   clk     : in  STD_LOGIC;
-        signal   ready   : in  STD_LOGIC;
-        signal   valid   : out STD_LOGIC;
-        signal   c0      : out STD_LOGIC_VECTOR(C_PX_BITS - 1 downto 0);
-        signal   c1      : out STD_LOGIC_VECTOR(C_PX_BITS - 1 downto 0);
-        signal   c2      : out STD_LOGIC_VECTOR(C_PX_BITS - 1 downto 0)
+        constant c0  : in natural;
+        constant c1  : in natural;
+        constant c2  : in natural;
+        signal clk   : in  STD_LOGIC;
+        signal rdy   : in  STD_LOGIC;
+        signal vld   : out STD_LOGIC;
+        signal dat   : out STD_LOGIC_VECTOR(31 downto 0)
     ) is begin
-        -- Wait until downstream is ready
-        if ready = '0' then
-            wait until ready = '1';
+        if rdy = '0' then
+            wait until rdy = '1';
         end if;
         wait until rising_edge(clk);
-        valid <= '1';
-        c0    <= std_logic_vector(to_unsigned(c0_val mod 256, C_PX_BITS));
-        c1    <= std_logic_vector(to_unsigned(c1_val mod 256, C_PX_BITS));
-        c2    <= std_logic_vector(to_unsigned(c2_val mod 256, C_PX_BITS));
+        vld              <= '1';
+        dat(31 downto 24)<= (others => '0');
+        dat(23 downto 16)<= std_logic_vector(to_unsigned(c0 mod 256, 8));
+        dat(15 downto  8)<= std_logic_vector(to_unsigned(c1 mod 256, 8));
+        dat( 7 downto  0)<= std_logic_vector(to_unsigned(c2 mod 256, 8));
         wait until rising_edge(clk);
-        valid <= '0';
-        c0    <= (others => '0');
-        c1    <= (others => '0');
-        c2    <= (others => '0');
+        vld <= '0';
+        dat <= (others => '0');
     end procedure;
 
-    ---------------------------------------------------------------------------
-    -- Helper: stream a full DATA_WIDTH x DATA_WIDTH image
-    ---------------------------------------------------------------------------
+    -- Stream a full IMG_SIZE x IMG_SIZE ramp image
     procedure stream_image (
-        signal clk    : in  STD_LOGIC;
-        signal ready  : in  STD_LOGIC;
-        signal valid  : out STD_LOGIC;
-        signal c0     : out STD_LOGIC_VECTOR(C_PX_BITS - 1 downto 0);
-        signal c1     : out STD_LOGIC_VECTOR(C_PX_BITS - 1 downto 0);
-        signal c2     : out STD_LOGIC_VECTOR(C_PX_BITS - 1 downto 0)
+        signal clk  : in  STD_LOGIC;
+        signal rdy  : in  STD_LOGIC;
+        signal vld  : out STD_LOGIC;
+        signal dat  : out STD_LOGIC_VECTOR(31 downto 0)
     ) is begin
-        for row in 0 to C_DATA_WIDTH - 1 loop
-            for col in 0 to C_DATA_WIDTH - 1 loop
-                send_pixel(col, row, (col + row), clk, ready, valid, c0, c1, c2);
+        for row in 0 to C_IMG_SIZE - 1 loop
+            for col in 0 to C_IMG_SIZE - 1 loop
+                send_pixel(col, row, (col + row) mod 256,
+                           clk, rdy, vld, dat);
             end loop;
         end loop;
         report "Image stream complete (" &
-               integer'image(C_DATA_WIDTH) & "x" &
-               integer'image(C_DATA_WIDTH) & " pixels)" severity note;
+               integer'image(C_IMG_SIZE) & "x" &
+               integer'image(C_IMG_SIZE) & ")." severity note;
     end procedure;
 
-    ---------------------------------------------------------------------------
-    -- Helper: send a specialist/patch-size selection
-    -- Waits for gpio_request_out before asserting valid
-    ---------------------------------------------------------------------------
+    -- Wait for gpio_out(0) request then send specialist one-hot + valid pulse
     procedure send_specialist (
-        constant one_hot    : in  STD_LOGIC_VECTOR(C_NUM_PS - 1 downto 0);
-        constant lbl        : in  string;
-        signal   clk        : in  STD_LOGIC;
-        signal   req        : in  STD_LOGIC;
-        signal   data       : out STD_LOGIC_VECTOR(C_NUM_PS - 1 downto 0);
-        signal   valid      : out STD_LOGIC
+        constant one_hot : in  STD_LOGIC_VECTOR(C_NUM_SPEC - 1 downto 0);
+        constant lbl     : in  string;
+        signal clk       : in  STD_LOGIC;
+        signal req       : in  STD_LOGIC_VECTOR(0 downto 0);
+        signal gpio      : out STD_LOGIC_VECTOR(C_NUM_SPEC downto 0)
     ) is begin
-        if req = '0' then
-            wait until req = '1';
+        if req(0) = '0' then
+            wait until req(0) = '1';
         end if;
         wait until rising_edge(clk);
         report "Sending specialist: " & lbl severity note;
-        data  <= one_hot;
-        valid <= '1';
+        gpio(C_NUM_SPEC downto 1) <= one_hot;
+        gpio(0)                   <= '1';   -- valid
         wait until rising_edge(clk);
-        valid <= '0';
-        data  <= (others => '0');
+        gpio <= (others => '0');
     end procedure;
 
-    ---------------------------------------------------------------------------
-    -- Helper: print all class sums from the output bus
-    ---------------------------------------------------------------------------
-    procedure print_class_sums (
-        constant sums : in STD_LOGIC_VECTOR(C_SUMS_WIDTH - 1 downto 0);
-        constant lbl: in string
+    -- Print all class sums extracted from the AXI register bus
+    procedure print_sums (
+        constant dat : in STD_LOGIC_VECTOR(C_AXI_NR * C_AXI_RW - 1 downto 0);
+        constant lbl : in string
     ) is
         variable s : signed(C_SUM_BITS - 1 downto 0);
     begin
-        report "=== Class sums after " & lbl & " ===" severity note;
-        for i in 0 to C_NUM_CLASSES - 1 loop
-            s := signed(sums((i + 1) * C_SUM_BITS - 1 downto i * C_SUM_BITS));
-            report "  class_sums(" & integer'image(i) & ") = " &
+        report "=== Class sums: " & lbl & " ===" severity note;
+        for i in 0 to C_NUM_CLS - 1 loop
+            s := signed(dat((i + 1) * C_SUM_BITS - 1 downto i * C_SUM_BITS));
+            report "  class(" & integer'image(i) & ") = " &
                    integer'image(to_integer(s)) severity note;
         end loop;
     end procedure;
@@ -166,48 +199,70 @@ architecture sim of inference_module_tb is
 begin
 
     ---------------------------------------------------------------------------
-    -- Clock generation
+    -- Clock
     ---------------------------------------------------------------------------
     clk <= not clk after CLK_PERIOD / 2;
+
+    ---------------------------------------------------------------------------
+    -- BRAM model: single-cycle registered read, matching Xilinx BRAM behaviour
+    ---------------------------------------------------------------------------
+    bram_model : process(clk)
+        constant mem   : bram_t := init_bram;
+        variable addr_i : integer;
+    begin
+        if rising_edge(clk) then
+            if bram_en = '1' then
+                addr_i := to_integer(unsigned(bram_addr));
+                if addr_i < BRAM_DEPTH then
+                    bram_data <= mem(addr_i);
+                else
+                    bram_data <= (others => '0');
+                end if;
+            end if;
+        end if;
+    end process;
 
     ---------------------------------------------------------------------------
     -- DUT instantiation
     ---------------------------------------------------------------------------
     dut : entity work.inference_module
         generic map (
-            NUM_PS          => C_NUM_PS,
+            NUM_SPECIALISTS => C_NUM_SPEC,
+            NUM_CLAUSES     => C_NUM_CL,
+            NUM_CLASSES     => C_NUM_CLS,
+            MAX_WEIGHT      => C_MAX_W,
+            IMG_SIZE        => C_IMG_SIZE,
             PS0             => C_PS0,
             PS1             => C_PS1,
             PS2             => C_PS2,
             PS3             => C_PS3,
-            DATA_WIDTH      => C_DATA_WIDTH,
             PX_BITS         => C_PX_BITS,
             POS_BITS        => C_POS_BITS,
             ENC_BITS        => C_ENC_BITS,
-            NUM_SPECIALISTS => C_NUM_SPEC,
-            NUM_CLAUSES     => C_NUM_CLAUSES,
-            NUM_CLASSES     => C_NUM_CLASSES,
-            MAX_WEIGHT      => C_MAX_WEIGHT
+            BRAM_ADDR_WIDTH => C_BRAM_AW,
+            BRAM_DATA_WIDTH => C_BRAM_DW,
+            AXI_REG_WIDTH   => C_AXI_RW,
+            AXI_NUM_REGS    => C_AXI_NR
         )
         port map (
-            clk                  => clk,
-            reset                => reset,
-            dma_intr             => dma_intr,
-            gpio_data_in         => gpio_data_in,
-            gpio_valid_in        => gpio_valid_in,
-            gpio_request_out     => gpio_request_out,
-            px_c0_data_in        => px_c0_data_in,
-            px_c1_data_in        => px_c1_data_in,
-            px_c2_data_in        => px_c2_data_in,
-            px_valid_in          => px_valid_in,
-            px_ready_out         => px_ready_out,
-            class_sums_data_out  => class_sums_data_out,
-            class_sums_valid_out => class_sums_valid_out,
-            class_sums_ready_in  => class_sums_ready_in
+            clk             => clk,
+            n_reset         => n_reset,
+            wr_ready_intr   => wr_ready_intr,
+            cs_valid_intr   => cs_valid_intr,
+            bram_addr_out   => bram_addr,
+            bram_en_out     => bram_en,
+            bram_data_in    => bram_data,
+            gpio_in         => gpio_in,
+            gpio_out        => gpio_out,
+            s_axis_tdata    => s_axis_tdata,
+            s_axis_tvalid   => s_axis_tvalid,
+            s_axis_tready   => s_axis_tready,
+            s_axis_tlast    => s_axis_tlast,
+            cs_data_out     => cs_data_out
         );
 
     ---------------------------------------------------------------------------
-    -- Stimulus process
+    -- Stimulus
     ---------------------------------------------------------------------------
     stim : process
     begin
@@ -216,115 +271,116 @@ begin
         -- 1. Reset for 10 cycles
         -----------------------------------------------------------------------
         report "Applying reset..." severity note;
-        reset <= '1';
+        n_reset <= '0';
         wait for CLK_PERIOD * 10;
         wait until rising_edge(clk);
-        reset <= '0';
+        n_reset <= '1';
         report "Reset released." severity note;
 
         -----------------------------------------------------------------------
-        -- 2. First inference pass: PS0 = 3x3 specialist ("0001")
+        -- 2. Pass 1 - specialist 0 ("0001"), w=1
+        --    After reset, clauses goes S_RESET->S_SETUP and asserts
+        --    spclst_request which ANDs with ps_request onto gpio_out(0).
+        --    We wait for that, then send the specialist.
+        --    clauses then loads from BRAM (S_LOAD), enters S_ACCUMULATE,
+        --    asserts patch_ready which propagates back as wr_ready_intr
+        --    once patches_v5 is also ready.
         -----------------------------------------------------------------------
-        send_specialist("0001", "PS0 3x3", clk, gpio_request_out,
-                        gpio_data_in, gpio_valid_in);
+        send_specialist("0001", "S0 w=1", clk, gpio_out, gpio_in);
 
-        stream_image(clk, px_ready_out, px_valid_in,
-                     px_c0_data_in, px_c1_data_in, px_c2_data_in);
+        report "Waiting for wr_ready_intr (BRAM load + patch ready)..." severity note;
+        if wr_ready_intr = '0' then
+            wait until wr_ready_intr = '1';
+        end if;
 
-        -- Wait for valid class sums
-        report "Waiting for class_sums_valid_out..." severity note;
-        if class_sums_valid_out = '0' then
-            wait until class_sums_valid_out = '1';
+        stream_image(clk, s_axis_tready, s_axis_tvalid, s_axis_tdata);
+
+        report "Waiting for cs_valid_intr..." severity note;
+        if cs_valid_intr = '0' then
+            wait until cs_valid_intr = '1';
         end if;
         wait until rising_edge(clk);
-
-        print_class_sums(class_sums_data_out, "PS0 3x3");
-
-        -- Acknowledge: hold ready for one cycle
-        class_sums_ready_in <= '1';
-        wait until rising_edge(clk);
-        class_sums_ready_in <= '0';
+        print_sums(cs_data_out, "S0 w=1 - expect each class_sum <= 4");
 
         -----------------------------------------------------------------------
-        -- 3. Second inference pass: PS1 = 4x4 specialist ("0010")
-        --    gpio_request_out will go high again once clauses is ready
+        -- 3. Pass 2 - specialist 1 ("0010"), w=2
+        --    After S_RESET_CLAUSES, clauses re-enters S_SETUP and raises
+        --    spclst_request_out again.
         -----------------------------------------------------------------------
-        send_specialist("0010", "PS1 4x4", clk, gpio_request_out,
-                        gpio_data_in, gpio_valid_in);
+        send_specialist("0010", "S1 w=2", clk, gpio_out, gpio_in);
 
-        stream_image(clk, px_ready_out, px_valid_in,
-                     px_c0_data_in, px_c1_data_in, px_c2_data_in);
+        report "Waiting for wr_ready_intr..." severity note;
+        if wr_ready_intr = '0' then
+            wait until wr_ready_intr = '1';
+        end if;
 
-        report "Waiting for class_sums_valid_out..." severity note;
-        if class_sums_valid_out = '0' then
-            wait until class_sums_valid_out = '1';
+        stream_image(clk, s_axis_tready, s_axis_tvalid, s_axis_tdata);
+
+        report "Waiting for cs_valid_intr..." severity note;
+        if cs_valid_intr = '0' then
+            wait until cs_valid_intr = '1';
         end if;
         wait until rising_edge(clk);
-
-        print_class_sums(class_sums_data_out, "PS1 4x4");
-
-        class_sums_ready_in <= '1';
-        wait until rising_edge(clk);
-        class_sums_ready_in <= '0';
+        print_sums(cs_data_out, "S1 w=2 - expect each class_sum <= 8");
 
         -----------------------------------------------------------------------
-        -- 4. Test reset mid-stream: apply reset while streaming third image
+        -- 4. Mid-stream reset recovery
         -----------------------------------------------------------------------
-        report "Starting PS2 5x5, will reset mid-stream..." severity note;
-        send_specialist("0100", "PS2 5x5", clk, gpio_request_out,
-                        gpio_data_in, gpio_valid_in);
+        report "Starting S2 w=3, resetting mid-stream..." severity note;
+        send_specialist("0100", "S2 w=3", clk, gpio_out, gpio_in);
 
-        -- Stream only half the image then reset
-        for row in 0 to (C_DATA_WIDTH / 2) - 1 loop
-            for col in 0 to C_DATA_WIDTH - 1 loop
-                send_pixel(col, row, col, clk, px_ready_out, px_valid_in,
-                           px_c0_data_in, px_c1_data_in, px_c2_data_in);
+        if wr_ready_intr = '0' then
+            wait until wr_ready_intr = '1';
+        end if;
+
+        -- Stream only half the image then assert reset
+        for row in 0 to (C_IMG_SIZE / 2) - 1 loop
+            for col in 0 to C_IMG_SIZE - 1 loop
+                send_pixel(col, row, col,
+                           clk, s_axis_tready, s_axis_tvalid, s_axis_tdata);
             end loop;
         end loop;
 
-        report "Applying mid-stream reset..." severity note;
-        reset <= '1';
+        report "Asserting mid-stream reset..." severity note;
+        n_reset <= '0';
         wait for CLK_PERIOD * 5;
         wait until rising_edge(clk);
-        reset <= '0';
-        report "Reset released, verifying recovery..." severity note;
+        n_reset <= '1';
+        report "Reset released - verifying recovery..." severity note;
 
-        -- System should request a new specialist after reset
-        send_specialist("0001", "PS0 3x3 (post-reset)", clk, gpio_request_out,
-                        gpio_data_in, gpio_valid_in);
+        -- System must re-request a specialist from scratch
+        send_specialist("0001", "S0 post-reset w=1", clk, gpio_out, gpio_in);
 
-        stream_image(clk, px_ready_out, px_valid_in,
-                     px_c0_data_in, px_c1_data_in, px_c2_data_in);
+        if wr_ready_intr = '0' then
+            wait until wr_ready_intr = '1';
+        end if;
 
-        report "Waiting for class_sums_valid_out after reset recovery..." severity note;
-        if class_sums_valid_out = '0' then
-            wait until class_sums_valid_out = '1';
+        stream_image(clk, s_axis_tready, s_axis_tvalid, s_axis_tdata);
+
+        report "Waiting for cs_valid_intr post-reset..." severity note;
+        if cs_valid_intr = '0' then
+            wait until cs_valid_intr = '1';
         end if;
         wait until rising_edge(clk);
-
-        print_class_sums(class_sums_data_out, "PS0 3x3 (post-reset)");
-
-        class_sums_ready_in <= '1';
-        wait until rising_edge(clk);
-        class_sums_ready_in <= '0';
+        print_sums(cs_data_out, "S0 post-reset w=1");
 
         -----------------------------------------------------------------------
         -- 5. Done
         -----------------------------------------------------------------------
-        report "==============================" severity note;
-        report "Simulation complete." severity note;
-        report "==============================" severity note;
+        report "================================" severity note;
+        report "Simulation complete."             severity note;
+        report "================================" severity note;
         wait;
 
     end process stim;
 
     ---------------------------------------------------------------------------
-    -- Timeout watchdog: fail if simulation stalls for 2ms
+    -- Watchdog: fail if simulation stalls
     ---------------------------------------------------------------------------
     watchdog : process
     begin
-        wait for 2 ms;
-        report "WATCHDOG: Simulation timed out!" severity failure;
+        wait for 5 ms;
+        report "WATCHDOG: simulation timed out!" severity failure;
     end process watchdog;
 
 end sim;

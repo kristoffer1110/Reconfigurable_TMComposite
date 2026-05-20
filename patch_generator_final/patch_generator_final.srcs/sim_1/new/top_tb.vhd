@@ -85,11 +85,10 @@ architecture sim of top_tb is
     ---------------------------------------------------------------------------
     signal clk            : std_logic := '0';
     signal n_reset        : std_logic := '0';                  -- start in reset
-    signal dma_intr       : std_logic;
+    signal wr_ready_intr  : std_logic;
 
-    signal gpio_in        : std_logic_vector(NUM_GPIO_IN-1 downto 0) :=
-                                                 (others => '0');
-    signal gpio_out       : std_logic_vector(NUM_GPIO_OUT-1 downto 0);
+    signal gpio_in        : std_logic_vector(4 downto 0) := (others => '0');
+    signal gpio_out       : std_logic_vector(0 downto 0);
 
     -- AXI-Stream pixel input (DMA -> IP)
     signal s_axis_tdata   : std_logic_vector(31 downto 0) := (others => '0');
@@ -123,7 +122,7 @@ begin
         port map (
             clk           => clk,
             n_reset       => n_reset,
-            dma_intr      => dma_intr,
+            wr_ready_intr => wr_ready_intr,
             gpio_in       => gpio_in,
             gpio_out      => gpio_out,
             s_axis_tdata  => s_axis_tdata,
@@ -145,7 +144,8 @@ begin
     -- Stops once NUM_PATCHES complete patches have been captured.
     ---------------------------------------------------------------------------
     capture_proc : process
-        file     out_file    : text open write_mode is "C:\Users\kgab\OneDrive - NTNU\master\testbench\sim\tb_output.txt";
+        file     out_file    : text open write_mode is 
+                                "C:\Users\kgab\OneDrive - NTNU\master\testbench\sim\tb_enc_output" & to_string(PS) & "x" & to_string(PS) & ".txt";
         variable l           : line;
         variable word_count  : integer := 0;
         variable patch_count : integer := 0;
