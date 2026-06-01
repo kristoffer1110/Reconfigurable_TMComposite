@@ -4,6 +4,7 @@ Rapport/
 context/
 sweeping window modularitet fra claude.txt
 test image reasoning.txt
+pynq_implementation_guide.md
 
 # Logs and journals
 *.log

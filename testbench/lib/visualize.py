@@ -176,3 +176,43 @@ def reconstruct_image(patches: Sequence[Patch],
     count = np.where(count == 0, 1.0, count)
     out = (accum / count).clip(0, 255).astype(np.uint8)
     return Image.fromarray(out, mode="RGB")
+
+# ── Tiled reconstruction (non-overlapping, stride = step) ────────────────────
+def reconstruct_tiled(patches: Sequence[Patch],
+                      img_size: int = 32,
+                      step: int = PS,
+                      as_is: bool = False) -> Image.Image:
+    """Reconstruct the source image by stamping non-overlapping patches as tiles.
+
+    Only patches whose x_index and y_index are both multiples of ``step``
+    are used.  Each is placed at its exact pixel position (x_index, y_index)
+    in a blank img_size × img_size canvas.  Where img_size is not divisible
+    by step (e.g. 32 / 7 ≈ 4.6), the last tile in each axis is clipped to
+    the canvas edge — the 4 pixel columns/rows that do not fit are dropped.
+
+    Parameters
+    ----------
+    patches  : sequence of Patch objects from parse_patches_from_words()
+    img_size : side length of the square output image in pixels (default 32)
+    step     : tile stride; use PS for the standard non-overlapping layout
+    as_is    : False (default) — inverse-thermometer decode, colours
+                                  approximate the original pixel values.
+               True            — linear scale only (value × 255 / 127),
+                                  shows the raw payload exactly as packed.
+
+    Returns
+    -------
+    PIL.Image  RGB, size img_size × img_size  (scale with save_show's scale=)
+    """
+    canvas   = np.zeros((img_size, img_size, 3), dtype=np.uint8)
+    selected = (p for p in patches
+                if p.x_index % step == 0 and p.y_index % step == 0)
+
+    for p in selected:
+        rgb = channels_to_rgb(p.c0, p.c1, p.c2, as_is=as_is)
+        x0, y0 = p.x_index, p.y_index
+        h = min(PS, img_size - y0)   # rows remaining on canvas
+        w = min(PS, img_size - x0)   # cols remaining on canvas
+        canvas[y0:y0 + h, x0:x0 + w] = rgb[:h, :w]
+
+    return Image.fromarray(canvas, mode="RGB")
