@@ -33,20 +33,20 @@ entity inference_module is
 end inference_module;
 
 architecture rtl of inference_module is
-    signal px_c2_data  : STD_LOGIC_VECTOR(ENC_BITS -1 downto 0);
-    signal px_c1_data  : STD_LOGIC_VECTOR(ENC_BITS -1 downto 0);
-    signal px_c0_data  : STD_LOGIC_VECTOR(ENC_BITS -1 downto 0);
-    signal px_valid    : STD_LOGIC;
-    signal px_ready    : STD_LOGIC;
+    signal px_c2_data       : STD_LOGIC_VECTOR(ENC_BITS -1 downto 0);
+    signal px_c1_data       : STD_LOGIC_VECTOR(ENC_BITS -1 downto 0);
+    signal px_c0_data       : STD_LOGIC_VECTOR(ENC_BITS -1 downto 0);
+    signal px_valid         : STD_LOGIC;
+    signal px_ready         : STD_LOGIC;
     
-    signal patch_x_pos   : STD_LOGIC_VECTOR(0 to POS_BITS -1);                 
-    signal patch_y_pos   : STD_LOGIC_VECTOR(0 to POS_BITS -1);                 
-    signal patch_c0_data : STD_LOGIC_VECTOR(PS3 * PS3 * ENC_BITS -1 downto 0); 
-    signal patch_c1_data : STD_LOGIC_VECTOR(PS3 * PS3 * ENC_BITS -1 downto 0); 
-    signal patch_c2_data : STD_LOGIC_VECTOR(PS3 * PS3 * ENC_BITS -1 downto 0); 
-    signal patch_valid   : STD_LOGIC;
-    signal patch_ready   : STD_LOGIC;
-    signal patch_last    : STD_LOGIC;
+    signal patch_x_pos      : STD_LOGIC_VECTOR(0 to POS_BITS -1);                 
+    signal patch_y_pos      : STD_LOGIC_VECTOR(0 to POS_BITS -1);                 
+    signal patch_c0_data    : STD_LOGIC_VECTOR(PS3 * PS3 * ENC_BITS -1 downto 0); 
+    signal patch_c1_data    : STD_LOGIC_VECTOR(PS3 * PS3 * ENC_BITS -1 downto 0); 
+    signal patch_c2_data    : STD_LOGIC_VECTOR(PS3 * PS3 * ENC_BITS -1 downto 0); 
+    signal patch_valid      : STD_LOGIC;
+    signal patch_ready      : STD_LOGIC;
+    signal patch_last       : STD_LOGIC;
     
     signal spclst_request   : STD_LOGIC;
     signal ps_request       : STD_LOGIC;  
@@ -61,18 +61,18 @@ begin
     pixel_encoding : entity work.pixel_encoding
     
         port map (
-            clk                 => clk            ,
-            reset               => reset          ,      
-            s_axis_tdata_c0_in  => s_axis_tdata(3*PX_BITS -1 downto 2*PX_BITS),
-            s_axis_tdata_c1_in  => s_axis_tdata(2*PX_BITS -1 downto PX_BITS  ),
-            s_axis_tdata_c2_in  => s_axis_tdata(1*PX_BITS -1 downto 0        ),
-            s_axis_tvalid_in    => s_axis_tvalid   ,
-            s_axis_tready_out   => s_axis_tready  ,
-            px_c2_data_out      => px_c2_data,
-            px_c1_data_out      => px_c1_data,
-            px_c0_data_out      => px_c0_data,
-            px_valid_out        => px_valid,
-            px_ready_in         => px_ready
+            clk             => clk,
+            reset           => reset,      
+            s_axis_tdata_c0 => s_axis_tdata(3*PX_BITS -1 downto 2*PX_BITS),
+            s_axis_tdata_c1 => s_axis_tdata(2*PX_BITS -1 downto PX_BITS  ),
+            s_axis_tdata_c0 => s_axis_tdata(1*PX_BITS -1 downto 0        ),
+            s_axis_tvalid   => s_axis_tvalid,
+            s_axis_tready   => s_axis_tready,
+            px_c2_data_out  => px_c2_data,
+            px_c1_data_out  => px_c1_data,
+            px_c0_data_out  => px_c0_data,
+            px_valid_out    => px_valid,
+            px_ready_in     => px_ready
         );
     
     patches : entity work.patches_v5
@@ -99,7 +99,7 @@ begin
             patch_last_out      => patch_last
         );
         
-    clauses : entity work.clause_logic
+    clauses : entity work.clauses
         
         port map (
             clk                 => clk ,
@@ -118,10 +118,10 @@ begin
             patch_valid_in      => patch_valid   ,
             patch_ready_out     => patch_ready   ,
             patch_last_in       => patch_last    ,
-            m_axis_tdata        => m_axis_tdata ,
-            m_axis_tvalid       => m_axis_tvalid,
-            m_axis_tready       => m_axis_tready,
-            m_axis_tlast        => m_axis_tlast              
+            cs_data_out         => m_axis_tdata ,
+            cs_valid_out        => m_axis_tvalid,
+            cs_ready_in         => m_axis_tready,
+            cs_last_out         => m_axis_tlast              
         );
 
 end rtl;

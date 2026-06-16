@@ -85,9 +85,9 @@ def main() -> None:
     root = os.path.dirname(here)
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--png", default=os.path.join(root, "data",
-                                                      "test_image_32x32_rgb.png"))
+                                                      "test_image.png"))
     parser.add_argument("--out", default=os.path.join(root, "sim",
-                                                      "pixel_input.txt"))
+                                                      "pixel_input_2.txt"))
     args = parser.parse_args()
     write_pixel_input(args.png, args.out)
 

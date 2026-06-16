@@ -2,9 +2,7 @@
 literature/
 Rapport/
 context/
-sweeping window modularitet fra claude.txt
-test image reasoning.txt
-pynq_implementation_guide.md
+
 
 # Logs and journals
 *.log
@@ -13,4 +11,10 @@ pynq_implementation_guide.md
 *.pb
 *.dcp
 *.venv
-
+*.ini
+*.pdf
+*.xls
+*.txt
+*.md
+*.rpx
+*.xlsx

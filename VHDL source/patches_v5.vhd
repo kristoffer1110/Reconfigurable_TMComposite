@@ -305,7 +305,7 @@ begin
                             rd_en       <= '1';
                         end if;
                     when RS_READ => 
-                        if rd_cntr = DATA_DEPTH -1 and patch_ready_in = '1' then
+                        if rd_cntr = DATA_DEPTH -1 then
                             rd_state    <= RS_IDLE;
                             rd_en       <= '0';
                         end if;

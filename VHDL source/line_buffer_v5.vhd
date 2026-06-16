@@ -38,7 +38,7 @@ architecture rtl of line_buffer_v5 is
     
 begin
     
-    ln_buff_wr_proc : process(clk)
+    process(clk)
     begin
         if rising_edge(clk)then
             if reset = '1' then
@@ -50,7 +50,7 @@ begin
         end if;
     end process;
     
-    wr_pntr_proc : process(clk)
+    process(clk)
     begin
         if rising_edge(clk) then
             if reset = '1' then
@@ -62,7 +62,7 @@ begin
         end if;
     end process;
     
-    rd_pntr_proc : process(clk)
+    process(clk)
     begin
         if rising_edge(clk) then
             if reset = '1' then
@@ -73,7 +73,7 @@ begin
         end if;
     end process;
     
-    output_proc : process(all)
+    process(all)
     begin
         for i in MAX_PS -1 downto 0 loop
             px_row_data_out(i) <= ln_buff(to_integer(rd_pntr) + i);

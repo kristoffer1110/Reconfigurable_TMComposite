@@ -25,18 +25,18 @@ package types_pkg is
     constant NUM_SPECIALISTS    : positive := 4;
     constant NUM_CLAUSES        : positive := 8;
     constant NUM_CLASSES        : positive := 10;
-    constant MAX_WEIGHT         : positive := 3;
-    
+    constant MAX_WEIGHT         : signed   := 7;
+
     constant CS_WORD_WIDTH      : positive := 32;    
-    constant CS_NUM_WORDS       : positive := 2;
+    constant CS_NUM_WORDS       : positive := 3;
     
     type pixel_row is array (natural range <>) of STD_LOGIC_VECTOR;
     type pixel_row_arr is array (natural range <>) of pixel_row;
     type enc_enable_arr is array (natural range <>) of STD_LOGIC_VECTOR;
     
-    type weight_arr is array (natural range NUM_CLASSES -1 downto 0) of signed(clog2(MAX_WEIGHT) +1 downto 0);
+    type weight_arr is array (natural range NUM_CLASSES -1 downto 0) of signed(clog2(MAX_WEIGHT) downto 0);
     type weight_matrix is array (natural range NUM_CLAUSES -1 downto 0) of weight_arr;
     
-    type class_sums_arr is array (natural range NUM_CLASSES -1 downto 0) of signed(clog2(MAX_WEIGHT*NUM_CLAUSES) downto 0);
+    type class_sums_arr is array (natural range NUM_CLASSES -1 downto 0) of signed(7 downto 0);
     
 end package;

@@ -28,10 +28,10 @@ entity clause_logic is
         patch_ready_out     : out STD_LOGIC;
         patch_last_in       : in STD_LOGIC;
         
-        m_axis_tdata        : out STD_LOGIC_VECTOR(CS_WORD_WIDTH - 1 downto 0);
-        m_axis_tvalid       : out STD_LOGIC;
-        m_axis_tready       : in STD_LOGIC;
-        m_axis_tlast        : out STD_LOGIC
+        cs_data_out         : out STD_LOGIC_VECTOR(CS_WORD_WIDTH - 1 downto 0);
+        cs_valid_out        : out STD_LOGIC;
+        cs_ready_in         : in STD_LOGIC;
+        cs_last_out         : out STD_LOGIC
     
     );
 end clause_logic;
@@ -39,8 +39,8 @@ end clause_logic;
 architecture rtl of clause_logic is
     
     -- BIT WIDTH CONSTANTS
-    constant SUM_BITS   : positive := clog2(MAX_WEIGHT * NUM_CLAUSES) + 1;
-    constant WGHT_BITS  : positive := clog2(MAX_WEIGHT) +2;
+    constant SUM_BITS   : positive := 8;
+    constant WGHT_BITS  : positive := 4;
     constant FEAT_BITS  : positive := 2*POS_BITS + 3*PS3*PS3*ENC_BITS;
     constant LIT_BITS   : positive := 2*FEAT_BITS;
     
@@ -61,10 +61,10 @@ architecture rtl of clause_logic is
     
     -- BRAM LOAD CONTROL
     signal bram_base        : unsigned(BRAM_ADDR_WIDTH -1 downto 0);
-    signal load_cntr         : integer range 0 to LOAD_WORDS + 1;    
-    signal clause_i_cntr     : integer range 0 to NUM_CLAUSES - 1;
-    signal class_j_cntr      : integer range 0 to NUM_CLASSES - 1;
-    signal word_in_cl_cntr   : integer range 0 to INC_WORDS - 1;
+    signal load_ctr         : integer range 0 to LOAD_WORDS + 1;    
+    signal clause_i_ctr     : integer range 0 to NUM_CLAUSES - 1;
+    signal class_j_ctr      : integer range 0 to NUM_CLASSES - 1;
+    signal word_in_cl_ctr   : integer range 0 to INC_WORDS - 1;
     signal in_inc_region    : boolean;    
     
     -- CLAUSE LOGIC PIPELINE    
@@ -80,10 +80,10 @@ architecture rtl of clause_logic is
     signal c2_data_r    : STD_LOGIC_VECTOR(PS3 * PS3 * ENC_BITS -1 downto 0);
     
     -- CLAUSE OUTPUT CONTROL
-    signal clause_rst   : STD_LOGIC;
-    signal cs_data      : class_sums_arr;
-    signal cs_data_flat : STD_LOGIC_VECTOR(CS_NUM_WORDS*CS_WORD_WIDTH -1 downto 0);
-    signal stream_word  : STD_LOGIC;
+    signal clause_rst       : STD_LOGIC;
+    signal cs_data          : class_sums_arr;
+    signal cs_data_flat     : STD_LOGIC_VECTOR(CS_NUM_WORDS*CS_WORD_WIDTH -1 downto 0);
+    signal stream_word_cntr : integer range 0 to CS_NUM_WORDS -1;
     
     type state_t is (S_RESET, S_IDLE, S_LOAD, S_ACCUMULATE, S_STREAM);
     signal state : state_t;
@@ -96,26 +96,22 @@ begin
         patch_ready_out <= '1' when state = S_ACCUMULATE else '0';
         
         bram_addr_out <= STD_LOGIC_VECTOR(
-            shift_left(resize(bram_base + to_unsigned(load_cntr, BRAM_ADDR_WIDTH), BRAM_ADDR_WIDTH), 2)
+            shift_left(resize(bram_base + to_unsigned(load_ctr, BRAM_ADDR_WIDTH), BRAM_ADDR_WIDTH), 2)
         );
-        bram_en_out     <= '1' when state = S_LOAD else '0';
+        bram_en_out <= '1' when state = S_LOAD and load_ctr /= LOAD_WORDS else '0';
                 
         cs_data_flat <= (others => '0');
         for i in 0 to NUM_CLASSES-1 loop
             cs_data_flat((i+1)*SUM_BITS - 1 downto i*SUM_BITS) <= STD_LOGIC_VECTOR(cs_data(i));
         end loop;
         
-        m_axis_tvalid   <= '1' when state = S_STREAM else '0';
-        m_axis_tlast    <= '1' when state = S_STREAM and stream_word = '1' else '0';
+        cs_valid_out    <= '1' when state = S_STREAM else '0';
+        cs_last_out     <= '1' when state = S_STREAM and stream_word_cntr = CS_NUM_WORDS -1 else '0';
         
         if state = S_STREAM then
-            if stream_word = '0' then
-                m_axis_tdata <= cs_data_flat(CS_WORD_WIDTH -1 downto 0);
-            else
-                m_axis_tdata <= cs_data_flat(2*CS_WORD_WIDTH -1 downto CS_WORD_WIDTH);
-            end if;
+            cs_data_out <= cs_data_flat((stream_word_cntr +1)*CS_WORD_WIDTH -1 downto stream_word_cntr*CS_WORD_WIDTH);
         else
-            m_axis_tdata     <= (others => '0');
+            cs_data_out     <= (others => '0');
         end if;
         
         spclst_request_out  <= '1' when state = S_IDLE else '0';
@@ -132,15 +128,15 @@ begin
                 state               <= S_RESET;
                 spclst_valid_prev   <= '0';
                 bram_base           <= (others => '0');
-                load_cntr            <= 0;
+                load_ctr            <= 0;
                 w_mtx               <= (others => (others => (others => '0')));                
-                class_j_cntr         <= 0;
-                clause_i_cntr        <= 0;
+                class_j_ctr         <= 0;
+                clause_i_ctr        <= 0;
                 in_inc_region       <= false;
                 n_inc_set           <= (others => (others => '0'));
-                word_in_cl_cntr      <= 0;                
+                word_in_cl_ctr      <= 0;                
                 cs_data             <= (others => (others => '0'));
-                stream_word         <= '0';
+                stream_word_cntr    <= 0;
                                                                         
             else
 
@@ -169,55 +165,55 @@ begin
                         end if;
                         
                     when S_LOAD =>
-                        load_cntr    <= load_cntr + 1;
+                        load_ctr    <= load_ctr + 1;
                         
-                        if load_cntr /= 0 then
+                        if load_ctr /= 0 then
                             if not in_inc_region then
-                                -- Weight region: clause_i_cntr/class_j_cntr step through w_mtx
-                                w_mtx(clause_i_cntr)(class_j_cntr) 
+                                -- Weight region: clause_i_ctr/class_j_ctr step through w_mtx
+                                w_mtx(clause_i_ctr)(class_j_ctr) 
                                     <= signed(bram_data_in(WGHT_BITS - 1 downto 0));
                                 
-                                if class_j_cntr = NUM_CLASSES - 1 then
-                                    class_j_cntr  <= 0;
-                                    if clause_i_cntr = NUM_CLAUSES - 1 then
+                                if class_j_ctr = NUM_CLASSES - 1 then
+                                    class_j_ctr  <= 0;
+                                    if clause_i_ctr = NUM_CLAUSES - 1 then
                                         -- Entering include region next cycle
-                                        clause_i_cntr  <= 0;
+                                        clause_i_ctr  <= 0;
                                         in_inc_region <= true;
                                     else
-                                        clause_i_cntr <= clause_i_cntr + 1;
+                                        clause_i_ctr <= clause_i_ctr + 1;
                                     end if;
                                 else
-                                    class_j_cntr <= class_j_cntr + 1;
+                                    class_j_ctr <= class_j_ctr + 1;
                                 end if;
                                 
                             else
-                                -- Include region: clause_i_cntr/word_in_cl_cntr step through n_inc_set
+                                -- Include region: clause_i_ctr/word_in_cl_ctr step through n_inc_set
                                 for b in 0 to 31 loop
-                                    if word_in_cl_cntr * 32 + b < LIT_BITS then
-                                        n_inc_set(clause_i_cntr)(word_in_cl_cntr * 32 + b)
+                                    if word_in_cl_ctr * 32 + b < LIT_BITS then
+                                        n_inc_set(clause_i_ctr)(word_in_cl_ctr * 32 + b)
                                             <= bram_data_in(b);
                                     end if;
                                 end loop;
                                 
-                                if word_in_cl_cntr = INC_WORDS - 1 then
-                                    word_in_cl_cntr <= 0;
-                                    if clause_i_cntr = NUM_CLAUSES - 1 then
-                                        clause_i_cntr <= 0;  -- done
+                                if word_in_cl_ctr = INC_WORDS - 1 then
+                                    word_in_cl_ctr <= 0;
+                                    if clause_i_ctr = NUM_CLAUSES - 1 then
+                                        clause_i_ctr <= 0;  -- done
                                     else
-                                        clause_i_cntr <= clause_i_cntr + 1;
+                                        clause_i_ctr <= clause_i_ctr + 1;
                                     end if;
                                 else
-                                    word_in_cl_cntr <= word_in_cl_cntr + 1;
+                                    word_in_cl_ctr <= word_in_cl_ctr + 1;
                                 end if;
                             end if;
                         end if;
                         
-                        if load_cntr = LOAD_WORDS then
+                        if load_ctr = LOAD_WORDS then
                             state           <= S_ACCUMULATE;
-                            load_cntr        <= 0;
-                            clause_i_cntr    <= 0;
-                            class_j_cntr     <= 0;
-                            word_in_cl_cntr  <= 0;
+                            load_ctr        <= 0;
+                            clause_i_ctr    <= 0;
+                            class_j_ctr     <= 0;
+                            word_in_cl_ctr  <= 0;
                             in_inc_region   <= false;                            
                         end if;
                         
@@ -239,13 +235,12 @@ begin
                         end if;
                     
                     when S_STREAM =>
-                        
-                        if m_axis_tready = '1' then
-                            if stream_word = '0' and m_axis_tready = '1' then
-                                stream_word <= '1';
-                            else
+                        if cs_ready_in = '1' then
+                            if stream_word_cntr = CS_NUM_WORDS - 1 then
                                 state               <= S_IDLE;
-                                stream_word         <= '0';
+                                stream_word_cntr    <= 0;
+                            else
+                                stream_word_cntr <= stream_word_cntr +1;
                             end if;
                         end if;
 
@@ -253,14 +248,14 @@ begin
                         state               <= S_RESET;
                         spclst_valid_prev   <= '0';
                         cs_data             <= (others => (others => '0'));
-                        stream_word         <= '0';
+                        stream_word_cntr    <= 0;
                         w_mtx               <= (others => (others => (others => '0')));
                         n_inc_set           <= (others => (others => '0'));
                         bram_base           <= (others => '0');                
-                        load_cntr            <= 0;
-                        clause_i_cntr        <= 0;
-                        class_j_cntr         <= 0;
-                        word_in_cl_cntr      <= 0;
+                        load_ctr            <= 0;
+                        clause_i_ctr        <= 0;
+                        class_j_ctr         <= 0;
+                        word_in_cl_ctr      <= 0;
                         in_inc_region       <= false;                                                                  
 
                 end case;
@@ -302,7 +297,7 @@ begin
     end process;
     
     clause_gen : for i in 0 to NUM_CLAUSES -1 generate
-        clause : entity work.clause_circuit
+        clause : entity work.clause_logic
             
             port map (
                 clk             => clk,
