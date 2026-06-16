@@ -2,7 +2,7 @@
 literature/
 Rapport/
 context/
-
+.gitignore
 
 # Logs and journals
 *.log
